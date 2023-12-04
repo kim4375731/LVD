@@ -117,7 +117,7 @@ class Dataset(DatasetBase):
 class DatasetPure(DatasetBase):
     def __init__(self, opt, mode):
         '''use only right hand dataset (test dataset are with only right hand ...)'''
-        super(Dataset, self).__init__(opt, mode)
+        super().__init__(opt, mode)
         self._name = 'DatasetPure'
 
         # read dataset
@@ -141,14 +141,15 @@ class DatasetPure(DatasetBase):
         self.mano_faces = self.MANO.th_faces.cpu().data.numpy()
 
         self.inds_hand = self.MANO.th_J_regressor.argmax(0)
-
     def __getitem__(self, index):
         #index = 0
         assert (index < self._dataset_size)
     
         voxels = self._voxels[index].astype(np.float32)
-        vertices = self._vertices[index].astype(np.float32)
-
+        mano_vertices = self._vertices[index].astype(np.float32)
+        pick_778_inds = np.random.randint(0, len(mano_vertices), 778)
+        mano_vertices = mano_vertices[pick_778_inds]
+        	
         b_min = np.array([-1.2, -1.2, -1.2])
         b_max = np.array([1.2, 1.2, 1.2])
         rand_uniform = np.random.uniform(b_min, b_max, (self.n_uniform, 3))

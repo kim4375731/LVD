@@ -25,7 +25,7 @@ class DatasetFactory:
             dataset = Dataset(opt, mode)
         # INPUT = VOXELS OF HANDS:
         elif dataset_name == 'voxels_MANO':
-            # from data.voxels_MANO import Dataset
+#            from data.voxels_MANO import Dataset
             from data.voxels_MANO import DatasetPure as Dataset   # yongjae-customized dataset
             dataset = Dataset(opt, mode)
 
