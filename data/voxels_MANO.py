@@ -1,3 +1,4 @@
+import os
 import os.path
 from data.dataset import DatasetBase
 from PIL import Image
@@ -47,7 +48,7 @@ class Dataset(DatasetBase):
         self.fine_std = 0.05
 
         from manopth.manolayer import ManoLayer
-        self.MANO = ManoLayer(ncomps=45, mano_root='/home/ecorona/libraries/manopth/mano/models/', use_pca=False, side='left')
+        self.MANO = ManoLayer(ncomps=45, mano_root='./mano/models/', use_pca=False, side='left')
         self.mano_faces = self.MANO.th_faces.cpu().data.numpy()
 
         self.inds_hand = self.MANO.th_J_regressor.argmax(0)
@@ -73,6 +74,80 @@ class Dataset(DatasetBase):
 
         voxels = np.load(name_voxels)
         mano_vertices = np.load(name_gt)
+
+        b_min = np.array([-1.2, -1.2, -1.2])
+        b_max = np.array([1.2, 1.2, 1.2])
+        rand_uniform = np.random.uniform(b_min, b_max, (self.n_uniform, 3))
+        
+        mano_inds = np.arange(778)
+        np.random.shuffle(mano_inds)
+        mano_inds = mano_inds[:self.n_fine_sampled]
+        noise_mano = np.random.normal(0, self.fine_std, (self.n_fine_sampled, 3))
+        rand_mano = mano_vertices[mano_inds] + noise_mano
+        point_pos = np.concatenate((rand_uniform, rand_mano))
+
+        # Retrieve occupancy:
+        mano_mesh = trimesh.Trimesh(mano_vertices, self.mano_faces)
+        mano_mesh = mano_mesh.subdivide()
+        dist = ((point_pos[None] - np.array(mano_mesh.vertices[:,None]))**2).sum(-1)
+        occupancy_body = dist.min(0)
+        threshold = 0.001
+        occupancy_body = occupancy_body < threshold
+
+        # Retrieve closest part:
+        dist = ((point_pos[None] - mano_vertices[:,None])**2).sum(-1)
+        closest = dist.argmin(0)
+        category_hand = self.inds_hand[closest]
+
+        # pack data
+        sample = {
+                  'input_voxels': voxels[None],
+                  'input_points': point_pos,
+                  'mano_vertices': mano_vertices,
+                  'occupancy_body': occupancy_body,
+                  'category_body': category_hand,
+                  }
+        return sample
+
+    def __len__(self):
+        return self._dataset_size
+
+
+
+class DatasetPure(DatasetBase):
+    def __init__(self, opt, mode):
+        '''use only right hand dataset (test dataset are with only right hand ...)'''
+        super(Dataset, self).__init__(opt, mode)
+        self._name = 'DatasetPure'
+
+        # read dataset
+        if self._mode == 'train':
+            self.scans_path = '/workspace/IPNet/data_pool/mano/handsOnly_SCANS/train.npz'              
+        else:
+            self.scans_path = '/workspace/IPNet/data_pool/mano/handsOnly_testDataset_SCANS/test.npz'                  
+        _data = np.load(self.scans_path, allow_pickle=True)
+        self._voxels = _data['voxels']
+        self._vertices = _data['vertices']
+        self._dataset_size = len(self._voxels)                   
+
+
+        self.n_uniform = 400
+        self.n_fine_sampled = 600
+        self.angle_every = 60
+        self.fine_std = 0.05
+
+        from manopth.manolayer import ManoLayer
+        self.MANO = ManoLayer(ncomps=45, mano_root='./mano/models/', use_pca=False, side='right')
+        self.mano_faces = self.MANO.th_faces.cpu().data.numpy()
+
+        self.inds_hand = self.MANO.th_J_regressor.argmax(0)
+
+    def __getitem__(self, index):
+        #index = 0
+        assert (index < self._dataset_size)
+    
+        voxels = self._voxels[index].astype(np.float32)
+        vertices = self._vertices[index].astype(np.float32)
 
         b_min = np.array([-1.2, -1.2, -1.2])
         b_max = np.array([1.2, 1.2, 1.2])

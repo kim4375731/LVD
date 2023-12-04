@@ -43,7 +43,7 @@ class Model(BaseModel):
 
         # init
         from manopth.manolayer import ManoLayer
-        self.MANO = ManoLayer(ncomps=45, mano_root='/home/ecorona/libraries/manopth/mano/models/', use_pca=False)
+        self.MANO = ManoLayer(ncomps=45, mano_root='./mano/models/', use_pca=False)
 
         self.pred_mesh = None
         self._init_losses()

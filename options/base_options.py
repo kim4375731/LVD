@@ -9,7 +9,7 @@ class BaseOptions():
         self._initialized = False
 
     def initialize(self):
-        self._parser.add_argument('--data_dir', type=str, default='/home/ecorona/data/', help='path to dataset')
+        self._parser.add_argument('--data_dir', type=str, default='./data/', help='path to dataset')  # /home/ecorona/data/
         self._parser.add_argument('--load_epoch', type=int, default=-1, help='which epoch to load? set to -1 to use latest cached model')
         self._parser.add_argument('--batch_size', type=int, default=12, help='input batch size')
         self._parser.add_argument('--name', type=str, default='experiment_1', help='name of the experiment. It decides where to store samples and models')
