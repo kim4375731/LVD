@@ -11,6 +11,9 @@ parser.add_argument('-m', '--mode', type=str)
 args = parser.parse_args()
 jobs_done = 0
 
+clue_train_endswith = 'r_scaled.obj'
+clue_test_endswith = '_scaled.obj'
+
 def voxelize_scan(scan):
     resolution = 128 # Voxel resolution
     b_min = np.array([-1.2, -1.2, -1.2])
@@ -65,12 +68,12 @@ def make_dataset(mode):
     '''use only right hand dataset (test dataset are with only right hand ...)'''
     if mode == "train":
         scans_dir = '/workspace/IPNet/data_pool/mano/handsOnly_SCANS'              
-        data_list = [f for f in os.listdir(scans_dir) if f.endswith('r.obj')]         
+        data_list = [f for f in os.listdir(scans_dir) if f.endswith(clue_train_endswith)]         
         dataset_name = 'train.npz'
     elif mode == "test":
         # scans_dir = '/workspace/IPNet/data_pool/mano/handsOnly_testDataset_SCANS'            
         scans_dir = '/workspace/IPNet/data_pool/mano/testdir2'            
-        data_list = [f for f in os.listdir(scans_dir) if f.endswith('.obj')]          
+        data_list = [f for f in os.listdir(scans_dir) if f.endswith(clue_test_endswith)]          
         dataset_name = 'test.npz'
     else:
         assert 0, "No such mode supported!"
@@ -93,11 +96,11 @@ def make_dataset_multithreading(mode):
     '''use only right hand dataset (test dataset are with only right hand ...)'''
     if mode == "train":
         scans_dir = '/workspace/IPNet/data_pool/mano/handsOnly_SCANS'              
-        data_list = [f for f in os.listdir(scans_dir) if f.endswith('r.obj')]         
+        data_list = [f for f in os.listdir(scans_dir) if f.endswith(clue_train_endswith)]         
         dataset_name = 'train.npz'
     elif mode == "test":
         scans_dir = '/workspace/IPNet/data_pool/mano/handsOnly_testDataset_SCANS'            
-        data_list = [f for f in os.listdir(scans_dir) if f.endswith('.obj')]          
+        data_list = [f for f in os.listdir(scans_dir) if f.endswith(clue_test_endswith)]          
         dataset_name = 'test.npz'
     else:
         assert 0, "No such mode supported!"

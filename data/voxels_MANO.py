@@ -122,9 +122,11 @@ class DatasetPure(DatasetBase):
 
         # read dataset
         if self._mode == 'train':
-            self.scans_path = '/workspace/IPNet/data_pool/mano/handsOnly_SCANS/train.npz'              
+            # self.scans_path = '/workspace/IPNet/data_pool/mano/handsOnly_SCANS/train.npz'              
+            self.scans_path = '/workspace/LVD/data/train.npz'                          
         else:
-            self.scans_path = '/workspace/IPNet/data_pool/mano/handsOnly_testDataset_SCANS/test.npz'                  
+            # self.scans_path = '/workspace/IPNet/data_pool/mano/handsOnly_testDataset_SCANS/test.npz'                  
+            self.scans_path = '/workspace/LVD/data/test.npz'                          
         _data = np.load(self.scans_path, allow_pickle=True)
         self._voxels = _data['voxels']
         self._vertices = _data['vertices']

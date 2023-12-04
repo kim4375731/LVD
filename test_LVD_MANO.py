@@ -66,15 +66,18 @@ class Test:
         self._model.set_eval()
         from manopth.manolayer import ManoLayer
         mano_root = './mano/models/'
-        self.MANO = ManoLayer(ncomps=12, mano_root=mano_root, use_pca=True, side='left')
+        self.MANO = ManoLayer(ncomps=12, mano_root=mano_root, use_pca=True, side='right')
         self.MANO.cuda()
         self.mano_faces = self.MANO.th_faces.cpu().data.numpy()
 
-        path_in = 'test_data/hands/'
+        # path_in = 'test_data/hands/'
+        path_in = '/workspace/IPNet/data_pool/mano/handsOnly_testDataset_SCANS/'
         scans = glob.glob(path_in + '*obj')
+        NUM_SAMPLE = 5
+        data_sampled = np.random.randint(0, len(scans), NUM_SAMPLE).tolist()  # len(scans)
 
         self._model.set_eval()
-        for index in tqdm.tqdm(range(len(scans))):
+        for index in tqdm.tqdm(data_sampled):
             name = str.split(str.split(scans[index], '/')[-1], '.')[0]
 
             scan = trimesh.load(scans[index])
