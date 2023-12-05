@@ -54,15 +54,28 @@ def voxelize_scan(scan):
     return voxels, vertices
 
 def convert_scan(path):
-    global jobs_done
+    global jobs_done 
 
     scan = trimesh.load(path)
-    voxels, normalized_vertices = voxelize_scan(scan)
+    voxels_list = []
+    vertices_list = []
+    angle_per = 120
+    periodic = 360//angle_per
+    for j in range(periodic):
+        if j != 0:
+            rotation_matrix = trimesh.transformations.rotation_matrix(
+                np.radians(angle_per), 
+                [0, 1, 0]  # y axis
+            )            
+            scan.apply_transform(rotation_matrix)        
+        voxels, normalized_vertices = voxelize_scan(scan)
+        voxels_list.append(voxels)
+        vertices_list.append(normalized_vertices)        
 
     jobs_done += 1
     print(f'jobs done : {jobs_done}')
 
-    return voxels, normalized_vertices
+    return voxels_list, vertices_list
 
 def make_dataset(mode):
     '''use only right hand dataset (test dataset are with only right hand ...)'''
@@ -80,12 +93,21 @@ def make_dataset(mode):
 
     voxels_list = []
     vertices_list = []
+    angle_per = 120
+    periodic = 360//angle_per
     for i, f in enumerate(data_list):
         print(f'[MAKEDATASET/INFO] converting ... ({i+1}/{len(data_list)})')
         scan = trimesh.load(scans_dir + '/' + f)
-        voxels, normalized_vertices = voxelize_scan(scan)
-        voxels_list.append(voxels)
-        vertices_list.append(normalized_vertices)
+        for j in range(periodic):
+            if j != 0:
+                rotation_matrix = trimesh.transformations.rotation_matrix(
+                    np.radians(angle_per), 
+                    [0, 1, 0]  # y axis
+                )            
+                scan.apply_transform(rotation_matrix)
+            voxels, normalized_vertices = voxelize_scan(scan)
+            voxels_list.append(voxels)
+            vertices_list.append(normalized_vertices)
     np_voxels = np.asarray(voxels_list, dtype=object)
     np_vertices = np.asarray(vertices_list, dtype=object)
     save_path = scans_dir + '/' + dataset_name
@@ -97,6 +119,8 @@ def make_dataset_multithreading(mode):
     if mode == "train":
         scans_dir = '/workspace/IPNet/data_pool/mano/handsOnly_SCANS'              
         data_list = [f for f in os.listdir(scans_dir) if f.endswith(clue_train_endswith)]         
+        # scans_dir = '/workspace/LVD/data'
+        # data_list = [f for f in os.listdir(scans_dir) if f.endswith('obj')]         
         dataset_name = 'train.npz'
     elif mode == "test":
         scans_dir = '/workspace/IPNet/data_pool/mano/handsOnly_testDataset_SCANS'            
@@ -107,12 +131,12 @@ def make_dataset_multithreading(mode):
 
     print(f'[MAKEDATASET/INFO] converting ... ')
     import concurrent.futures
-    paths = [scans_dir + '/' + f for f in data_list]
+    paths = [scans_dir + '/' + f for f in data_list]    
     with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
         results = list(executor.map(convert_scan, paths))
     np_results = np.asarray(results, dtype=object)
-    np_voxels = np_results[:, 0]
-    np_vertices = np_results[:, 1]
+    np_voxels = np.stack(np.concatenate(np_results[:, 0], axis=-1)).astype(np.float32)
+    np_vertices = np.stack(np.concatenate(np_results[:, 0], axis=-1)).astype(np.float32)
     save_path = scans_dir + '/' + dataset_name
     np.savez_compressed(save_path, voxels=np_voxels, vertices=np_vertices)
 

@@ -123,7 +123,7 @@ class DatasetPure(DatasetBase):
         # read dataset
         if self._mode == 'train':
             # self.scans_path = '/workspace/IPNet/data_pool/mano/handsOnly_SCANS/train.npz'              
-            self.scans_path = '/workspace/LVD/data/train.npz'                          
+            self.scans_path = '/workspace/LVD/data/train_norm.npz'                          
         else:
             # self.scans_path = '/workspace/IPNet/data_pool/mano/handsOnly_testDataset_SCANS/test.npz'                  
             self.scans_path = '/workspace/LVD/data/test.npz'                          
