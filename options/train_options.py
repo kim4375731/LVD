@@ -16,4 +16,6 @@ class TrainOptions(BaseOptions):
         self._parser.add_argument('--G_adam_b1', type=float, default=0.5, help='beta1 for G adam')
         self._parser.add_argument('--G_adam_b2', type=float, default=0.999, help='beta2 for G adam')
 
+        self._parser.add_argument('--aug-pad', type=int, default=6, help='how much input data augmented')
+
         self.is_train = True

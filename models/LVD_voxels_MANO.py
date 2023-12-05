@@ -7,6 +7,7 @@ from networks.networks import NetworksFactory
 import os
 import numpy as np
 from torch import nn
+import torch.nn.functional as F
 import tqdm
 from skimage import measure
 import pyrender
@@ -16,6 +17,7 @@ class Model(BaseModel):
     def __init__(self, opt):
         super(Model, self).__init__(opt)
         self._name = 'model1'
+        self._pad = self._opt.aug_pad
 
         # create networks
         self._init_create_networks()
@@ -71,6 +73,10 @@ class Model(BaseModel):
         self._input_voxels = input['input_voxels'].float().cuda()
         self._input_points = input['input_points'].float().cuda()
         self._target_mano = input['mano_vertices'].float().cuda()
+
+        print(f'self._input_voxels shaep {self._input_voxels.shape}')
+        assert 0
+        self._input_voxels = self.random_shift(self._input_voxels, self._pad)
 
         self._input_voxels = torch.cat((torch.clamp(self._input_voxels, 0, 0.001)*100,
                                         torch.clamp(self._input_voxels, 0, 0.002)*50,
@@ -256,3 +262,32 @@ class Model(BaseModel):
         for param_group in self._optimizer_img_encoder.param_groups:
             param_group['lr'] = self._current_lr_G
         print('update G learning rate: %f -> %f' %  (self._current_lr_G + lr_decay_G, self._current_lr_G))
+
+    def random_shift(self, x, pad):
+        n, c, d, h, w = x.size()
+        assert h == w and h == d
+        padding = tuple([pad] * 6)
+        x = F.pad(x, padding, 'replicate')
+        eps = 1.0 / (h + 2 * pad)
+        arange = torch.linspace(-1.0 + eps,
+                                1.0 - eps,
+                                h + 2 * pad,
+                                device=x.device,
+                                dtype=x.dtype)[:h]
+        arange = arange[None].repeat(h, 1)[None].repeat(h, 1, 1).unsqueeze(3)
+        base_grid = torch.cat([arange, arange.transpose(1,2), arange.transpose(0, 2)], dim=3)
+        base_grid = base_grid.unsqueeze(0).repeat(n, 1, 1, 1, 1)
+
+        shift = torch.randint(0,
+                              2 * pad + 1,
+                              size=(n, 1, 1, 1, 3),
+                              device=x.device,
+                              dtype=x.dtype)
+        shift *= 2.0 / (h + 2 * pad)
+
+        grid = base_grid + shift
+        return F.grid_sample(x,
+                             grid,
+                             padding_mode='zeros',
+                             align_corners=False)
+

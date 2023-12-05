@@ -11,8 +11,8 @@ parser.add_argument('-m', '--mode', type=str)
 args = parser.parse_args()
 jobs_done = 0
 
-clue_train_endswith = 'r_scaled.obj'
-clue_test_endswith = '_scaled.obj'
+clue_train_endswith = 'r.obj'
+clue_test_endswith = '.obj'
 
 def voxelize_scan(scan):
     resolution = 128 # Voxel resolution
@@ -122,7 +122,7 @@ def make_dataset_multithreading(mode):
         data_list = [f for f in os.listdir(scans_dir) if f.endswith(clue_train_endswith)]         
         # scans_dir = '/workspace/LVD/data'
         # data_list = [f for f in os.listdir(scans_dir) if f.endswith('obj')]         
-        dataset_name = 'train.npz'
+        dataset_name = 'train_120deg.npz'
     elif mode == "test":
         scans_dir = '/workspace/IPNet/data_pool/mano/handsOnly_testDataset_SCANS'            
         data_list = [f for f in os.listdir(scans_dir) if f.endswith(clue_test_endswith)]          
