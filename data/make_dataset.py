@@ -69,8 +69,9 @@ def convert_scan(path):
             )            
             scan.apply_transform(rotation_matrix)        
         voxels, normalized_vertices = voxelize_scan(scan)
+        idx_778 = np.random.randint(0, len(normalized_vertices), 778)
         voxels_list.append(voxels)
-        vertices_list.append(normalized_vertices)        
+        vertices_list.append(normalized_vertices[idx_778])        
 
     jobs_done += 1
     print(f'jobs done : {jobs_done}')
