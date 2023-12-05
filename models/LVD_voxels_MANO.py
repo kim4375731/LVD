@@ -17,7 +17,6 @@ class Model(BaseModel):
     def __init__(self, opt):
         super(Model, self).__init__(opt)
         self._name = 'model1'
-        self._pad = self._opt.aug_pad
 
         # create networks
         self._init_create_networks()
@@ -52,6 +51,7 @@ class Model(BaseModel):
         #return NetworksFactory.get_by_name('img_encoder', 6 +12+48+49+48+48+24)
 
     def _init_train_vars(self):
+        self._pad = self._opt.aug_pad        
         self._current_lr_G = self._opt.lr_G
 
         # initialize optimizers
