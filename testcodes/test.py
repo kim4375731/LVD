@@ -57,7 +57,7 @@ class RandomShiftsAug3D(nn.Module):
                                 device=x.device,
                                 dtype=x.dtype)[:h]
         arange = arange[None].repeat(h, 1)[None].repeat(h, 1, 1).unsqueeze(3)
-        base_grid = torch.cat([arange.transpose(0, 2), arange.transpose(1, 0), arange], dim=3)
+        base_grid = torch.cat([arange, arange.transpose(1,2), arange.transpose(0, 2)], dim=3)
         base_grid = base_grid.unsqueeze(0).repeat(n, 1, 1, 1, 1)
 
         shift = torch.randint(0,
@@ -73,11 +73,21 @@ class RandomShiftsAug3D(nn.Module):
                              padding_mode='zeros',
                              align_corners=False)
     
+def main2d():
+    side = 4
+    pad = 0
+    inp = torch.arange(side**2).float().reshape(1,1,side,side) +1
+    rs = RandomShiftsAug(pad)
+    out = rs(inp)
+    print(f'input : \n{inp.int()}')
+    print(f'output : \n{out.int()}')
+    print(f'inputshaep : {inp.shape}')
+    print(f'outputshaep : {out.shape}')
 
-
-def main():
-    inp = torch.arange(64).float().reshape(1,1,4,4,4) +1
+def main3d():
+    side = 4
     pad = 1
+    inp = torch.arange(side**3).float().reshape(1,1,side,side,side) +1
     rs = RandomShiftsAug3D(pad)
     out = rs(inp)
     print(f'input : \n{inp.int()}')
@@ -87,4 +97,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main3d()
