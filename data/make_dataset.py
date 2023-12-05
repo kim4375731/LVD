@@ -119,9 +119,8 @@ def make_dataset_multithreading(mode):
     '''use only right hand dataset (test dataset are with only right hand ...)'''
     if mode == "train":
         scans_dir = '/workspace/IPNet/data_pool/mano/handsOnly_SCANS'              
+        # scans_dir = '/workspace/IPNet/data_pool/mano/testdir'              
         data_list = [f for f in os.listdir(scans_dir) if f.endswith(clue_train_endswith)]         
-        # scans_dir = '/workspace/LVD/data'
-        # data_list = [f for f in os.listdir(scans_dir) if f.endswith('obj')]         
         dataset_name = 'train_120deg.npz'
     elif mode == "test":
         scans_dir = '/workspace/IPNet/data_pool/mano/handsOnly_testDataset_SCANS'            
@@ -137,7 +136,7 @@ def make_dataset_multithreading(mode):
         results = list(executor.map(convert_scan, paths))
     np_results = np.asarray(results, dtype=object)
     np_voxels = np.stack(np.concatenate(np_results[:, 0], axis=-1)).astype(np.float32)
-    np_vertices = np.stack(np.concatenate(np_results[:, 0], axis=-1)).astype(np.float32)
+    np_vertices = np.stack(np.concatenate(np_results[:, 1], axis=-1)).astype(np.float32)
     save_path = scans_dir + '/' + dataset_name
     np.savez_compressed(save_path, voxels=np_voxels, vertices=np_vertices)
 
