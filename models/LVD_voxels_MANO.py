@@ -74,9 +74,7 @@ class Model(BaseModel):
         self._input_points = input['input_points'].float().cuda()
         self._target_mano = input['mano_vertices'].float().cuda()
 
-        print(f'self._input_voxels shaep {self._input_voxels.shape}')
-        assert 0
-        self._input_voxels = self.random_shift(self._input_voxels, self._pad)
+        self._input_voxels = self.random_shift(self._input_voxels, self._pad)  # shape: [batch_size, 1, 128, 128, 128]
 
         self._input_voxels = torch.cat((torch.clamp(self._input_voxels, 0, 0.001)*100,
                                         torch.clamp(self._input_voxels, 0, 0.002)*50,
