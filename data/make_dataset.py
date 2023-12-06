@@ -138,7 +138,9 @@ def make_dataset_multithreading(mode):
     np_voxels = np.stack(np.concatenate(np_results[:, 0], axis=-1)).astype(np.float32)
     np_vertices = np.stack(np.concatenate(np_results[:, 1], axis=-1)).astype(np.float32)
     save_path = scans_dir + '/' + dataset_name
+    print(f'makng dataset ...')
     np.savez_compressed(save_path, voxels=np_voxels, vertices=np_vertices)
+    print(f'created {os.path.join(scans_dir, dataset_name)}!')
 
 
 if __name__ == "__main__":
