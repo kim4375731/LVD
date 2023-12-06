@@ -119,7 +119,7 @@ def make_dataset_multithreading(mode):
     '''use only right hand dataset (test dataset are with only right hand ...)'''
     if mode == "train":
         scans_dir = '/workspace/IPNet/data_pool/mano/handsOnly_SCANS'              
-        # scans_dir = '/workspace/IPNet/data_pool/mano/testdir'              
+        # scans_dir = '/workspace/LVD/data'                      
         data_list = [f for f in os.listdir(scans_dir) if f.endswith(clue_train_endswith)]         
         dataset_name = 'train_120deg.npz'
     elif mode == "test":

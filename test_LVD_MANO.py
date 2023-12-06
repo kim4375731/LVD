@@ -73,7 +73,7 @@ class Test:
         # path_in = 'test_data/hands/'
         path_in = '/workspace/IPNet/data_pool/mano/handsOnly_testDataset_SCANS/'
         scans = glob.glob(path_in + '*obj')
-        NUM_SAMPLE = 5
+        NUM_SAMPLE = 7
         data_sampled = np.random.randint(0, len(scans), NUM_SAMPLE).tolist()  # len(scans)
 
         self._model.set_eval()
