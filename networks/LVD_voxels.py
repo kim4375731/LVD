@@ -40,7 +40,9 @@ class Network(NetworkBase):
 
         self.maxpool = nn.MaxPool3d(2)
 
-    def forward(self, x):
+        self.lin_random_shift = nn.Linear(8192, 64)
+
+    def forward(self, x, batch_shift=0):
         features0 = x
         x = self.actvn(self.conv_1(x))
         x = self.actvn(self.conv_1_1(x))
@@ -77,6 +79,22 @@ class Network(NetworkBase):
         features7 = x
 
         self.features = [features0, features1, features2, features3, features4, features5, features6, features7]
+        # print(f'feature shapes: ')
+        # for i, f in enumerate(self.features):
+        #     print(f'features{i}')
+        #     print(f.shape)
+        #     print(f'equal?')
+        #     for j in range(f.shape[0]):
+        #         print(f[0].equal(f[j]))
+        if batch_shift:
+            self.features = [f[::batch_shift] for f in self.features]
+
+            feat = self.lin_random_shift(features5.view(-1, 8192))
+            feat = self.actvn(feat)
+            return feat
+        else:
+            return None
+            
 
     def query(self, p):
         _B, _numpoints, _ = p.shape

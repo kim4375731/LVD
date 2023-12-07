@@ -51,7 +51,8 @@ class Model(BaseModel):
         #return NetworksFactory.get_by_name('img_encoder', 6 +12+48+49+48+48+24)
 
     def _init_train_vars(self):
-        self._pad = self._opt.aug_pad        
+        self._pad = self._opt.aug_pad   
+        self._batch_shift = self._opt.batch_shift     
         self._current_lr_G = self._opt.lr_G
 
         # initialize optimizers
@@ -66,6 +67,7 @@ class Model(BaseModel):
     def _init_losses(self):
         # init losses G
         self._loss_L2 = torch.FloatTensor([0]).cuda()
+        self._loss_random_shift = torch.FloatTensor([0]).cuda()
 
         self._sigmoid = nn.Sigmoid()
 
@@ -73,8 +75,9 @@ class Model(BaseModel):
         self._input_voxels = input['input_voxels'].float().cuda()
         self._input_points = input['input_points'].float().cuda()
         self._target_mano = input['mano_vertices'].float().cuda()
-
-        self._input_voxels = self.random_shift(self._input_voxels, self._pad)  # shape: [batch_size, 1, 128, 128, 128]
+        
+        if self._is_train:
+            self._input_voxels = self.random_shift(self._input_voxels, self._pad, batch_shift=self._batch_shift)  # shape: [batch_size*batch_shift, 1, 128, 128, 128]
 
         self._input_voxels = torch.cat((torch.clamp(self._input_voxels, 0, 0.001)*100,
                                         torch.clamp(self._input_voxels, 0, 0.002)*50,
@@ -146,7 +149,11 @@ class Model(BaseModel):
             self._optimizer_img_encoder.step()
 
     def _forward_G(self):
-        self._img_encoder(self._input_voxels)
+        if self._batch_shift:
+            feat = self._img_encoder(self._input_voxels, self._batch_shift)
+            self._input_voxels = self._input_voxels[::self._batch_shift]
+        else:
+            self._img_encoder(self._input_voxels)
         _B = self._input_voxels.shape[0]
         _numpoints = self._input_points.shape[1]
 
@@ -162,15 +169,21 @@ class Model(BaseModel):
         pred = pred.reshape(_B, 778, 3, _numpoints).permute(0, 1, 3, 2)
 
         #gt = gt * 10
-        self._loss_L2 = torch.abs(dist - pred) # Actually L1 for now
+        if self._batch_shift:
+            feat_vec = feat.reshape(_B, self._batch_shift, -1)
+            feat_vec = feat_vec / feat_vec.norm(dim=-1, keepdim=True)  # normalize
+            self._loss_random_shift = torch.stack([(feat_vec[:, i+1] - feat_vec[:, i]).norm(dim=-1) for i in range(self._batch_shift-1)]).sum(0).mean()
+
+        self._loss_L2 = torch.abs(dist - pred)  # Actually L1 for now
         self._loss_L2 = self._loss_L2.mean()
 
         # TODO ADD Deformation!
-        return self._loss_L2
+        return self._loss_L2 + self._loss_random_shift * 10
 
     def get_current_errors(self):
         loss_dict = OrderedDict([
                                  ('Distance loss', self._loss_L2.cpu().data.numpy()),
+                                 ('Random Shift loss', self._loss_random_shift.cpu().data.numpy()),
                                  ])
         return loss_dict
 
@@ -261,8 +274,10 @@ class Model(BaseModel):
             param_group['lr'] = self._current_lr_G
         print('update G learning rate: %f -> %f' %  (self._current_lr_G + lr_decay_G, self._current_lr_G))
 
-    def random_shift(self, x, pad):
-        n, c, d, h, w = x.size()
+    def random_shift(self, x, pad, batch_shift=0):
+        if batch_shift:
+            x = x.repeat_interleave(batch_shift, dim=0)
+        n, c, d, h, w = x.size()            
         assert h == w and h == d
         padding = tuple([pad] * 6)
         x = F.pad(x, padding, 'replicate')

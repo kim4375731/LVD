@@ -11,7 +11,7 @@ parser.add_argument('-m', '--mode', type=str)
 args = parser.parse_args()
 jobs_done = 0
 
-clue_train_endswith = 'r.obj'
+clue_train_endswith = 'l.obj'
 clue_test_endswith = '.obj'
 
 def voxelize_scan(scan):
@@ -121,7 +121,7 @@ def make_dataset_multithreading(mode):
         scans_dir = '/workspace/IPNet/data_pool/mano/handsOnly_SCANS'              
         # scans_dir = '/workspace/LVD/data'                      
         data_list = [f for f in os.listdir(scans_dir) if f.endswith(clue_train_endswith)]         
-        dataset_name = 'train_120deg.npz'
+        dataset_name = 'train_120deg_left.npz'
     elif mode == "test":
         scans_dir = '/workspace/IPNet/data_pool/mano/handsOnly_testDataset_SCANS'            
         data_list = [f for f in os.listdir(scans_dir) if f.endswith(clue_test_endswith)]          
