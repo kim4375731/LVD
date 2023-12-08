@@ -123,8 +123,9 @@ class DatasetPure(DatasetBase):
         # read dataset
         if self._mode == 'train':
             # self.scans_path = '/workspace/IPNet/data_pool/mano/handsOnly_SCANS/train.npz'              
-            self.scans_path = '/workspace/LVD/data/train_120deg_right.npz'                          
-            # self.scans_path = '/workspace/LVD/data/train_120deg_left.npz'                          
+            # self.scans_path = '/workspace/LVD/data/train_120deg_right.npz'                          
+            # self.scans_path = '/workspace/LVD/data/train_120deg_right.npz'                          
+            self.scans_path = '/workspace/LVD/data/train_120deg_left.npz'                          
         else:
             # self.scans_path = '/workspace/IPNet/data_pool/mano/handsOnly_testDataset_SCANS/test.npz'                  
             self.scans_path = '/workspace/LVD/data/test.npz'                          
@@ -140,7 +141,7 @@ class DatasetPure(DatasetBase):
         self.fine_std = 0.05
 
         from manopth.manolayer import ManoLayer
-        self.MANO = ManoLayer(ncomps=45, mano_root='./mano/models/', use_pca=False, side='right')
+        self.MANO = ManoLayer(ncomps=45, mano_root='./mano/models/', use_pca=False, side='left')
         self.mano_faces = self.MANO.th_faces.cpu().data.numpy()
 
         self.inds_hand = self.MANO.th_J_regressor.argmax(0)

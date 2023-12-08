@@ -397,7 +397,7 @@ def plot_points(verts, switch_axes=False, title=None):
     fig.canvas.draw()
     data = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
     data = data.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-    plt.close(fig)
+    # plt.close(fig)
 
     return data
 
@@ -472,7 +472,8 @@ def plot_rgb(img):
 
 def plot_voxels(voxels):
     fig = plt.figure()
-    ax = fig.gca(projection='3d')
+    # ax = fig.gca(projection='3d')
+    ax = fig.add_subplot(projection='3d')
     ax.voxels(voxels, edgecolor="k")
     ax.axis('off')
     fig.subplots_adjust(0, 0, 1.0, 1)  # get rid of margins

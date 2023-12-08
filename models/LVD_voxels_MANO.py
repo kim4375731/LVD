@@ -280,7 +280,7 @@ class Model(BaseModel):
         n, c, d, h, w = x.size()            
         assert h == w and h == d
         padding = tuple([pad] * 6)
-        x = F.pad(x, padding, 'replicate')
+        x = F.pad(x, padding, 'replicate')  #'constant', 0)
         eps = 1.0 / (h + 2 * pad)
         arange = torch.linspace(-1.0 + eps,
                                 1.0 - eps,

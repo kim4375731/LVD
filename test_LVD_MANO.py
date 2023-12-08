@@ -11,6 +11,8 @@ import trimesh
 # from kaolin.metrics import  directed_distance
 from kaolin.metrics.pointcloud import sided_distance
 
+import matplotlib.pyplot as plt
+
 class Test:
     def __init__(self):
         self._opt = TestOptions().parse()
@@ -66,19 +68,21 @@ class Test:
         self._model.set_eval()
         from manopth.manolayer import ManoLayer
         mano_root = './mano/models/'
-        self.MANO = ManoLayer(ncomps=12, mano_root=mano_root, use_pca=True, side='right')
+        self.MANO = ManoLayer(ncomps=12, mano_root=mano_root, use_pca=True, side='left')
         self.MANO.cuda()
         self.mano_faces = self.MANO.th_faces.cpu().data.numpy()
 
-        # path_in = 'test_data/hands/'
-        path_in = '/workspace/IPNet/data_pool/mano/handsOnly_testDataset_SCANS/'
-        scans = glob.glob(path_in + '*obj')
-        NUM_SAMPLE = 7
-        data_sampled = np.random.randint(0, len(scans), NUM_SAMPLE).tolist()  # len(scans)
+        path_in = 'test_data/hands/'
+        # path_in = '/workspace/IPNet/data_pool/mano/handsOnly_testDataset_SCANS/'
+        scans = glob.glob(path_in + '*0.obj')
+        # NUM_SAMPLE = 7
+        # data_sampled = [9] # [37, 36,  9,  7, 33, 29, 27]  # np.random.randint(0, len(scans), NUM_SAMPLE).tolist()  # len(scans)
 
+        mmdist = []
         self._model.set_eval()
-        for index in tqdm.tqdm(data_sampled):
+        for index in tqdm.tqdm(range(len(scans))):  # range(len(scans)), data_sampled
             name = str.split(str.split(scans[index], '/')[-1], '.')[0]
+            print(f'\nname: {name}')
 
             scan = trimesh.load(scans[index])
             voxels, normalized_vertices = self.voxelize_scan(scan)
@@ -141,6 +145,7 @@ class Test:
 
             # Fit MANO to input pointcloud to finally refine pose and shape parameters:
             optimizer_smpl = torch.optim.Adam(parameters_smpl.parameters(), lr=lr)
+            dist_means = []
             for i in tqdm.tqdm(range(iterations)):
                 pose, beta, trans, scale = parameters_smpl.forward()
                 vertices_smpl, pred_joints = self.MANO.forward(pose, beta)
@@ -154,7 +159,8 @@ class Test:
                 
                 d = sided_distance(torch.unsqueeze(vertices_scan_torch,0), torch.unsqueeze(vertices_smpl[0],0))[0]                
                 loss = torch.sum(d)
-
+                d_mean = torch.mean(d).cpu().detach().numpy()
+                dist_means.append(d_mean.item())                
 
                 prior_loss = (pose**2).mean() #self.prior.forward(pose[:, 3:], beta)
                 beta_loss = (beta**2).mean()
@@ -166,6 +172,12 @@ class Test:
 
                 for param_group in optimizer_smpl.param_groups:
                     param_group['lr'] = lr*(iterations-i)/iterations
+            # plt.figure(index)
+            # plt.plot(range(iterations), dist_means)
+            # plt.savefig('results/sample_mano_%s_fit_meandist.png'%name)
+            fin_dist = dist_means[-1]*100
+            print(f'\nfinal mean dist : {fin_dist:.2f} cm')
+            mmdist.append(fin_dist)
 
             with torch.no_grad():
                 pose, beta, trans, scale = parameters_smpl.forward()
@@ -177,6 +189,7 @@ class Test:
             m_fit = trimesh.Trimesh(fit_mesh, np.array(self.mano_faces), process=False)
             m_fit.export('results/sample_mano_%s_fit.obj'%name);
             scan.export('results/sample_mano_%s_input_scan.obj'%name);
+        print(f'\nmean mean dist : {np.mean(mmdist):.2f} cm')
 
 
 class OptimizationMANO(torch.nn.Module):
